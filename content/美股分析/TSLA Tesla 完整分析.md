@@ -7,7 +7,7 @@ sector: 電動車 / 能源 / AI
 
 # Tesla (TSLA) 完整 SNR 技術分析
 
-<iframe src="/stock-notes/static/tesla-tracker.html" style="width:100%;height:820px;border:none;border-radius:12px;display:block;margin-bottom:2rem;" loading="lazy"></iframe>
+<iframe src="https://eason080712.github.io/tesla-tracker/" style="width:100%;height:820px;border:none;border-radius:12px;display:block;margin-bottom:2rem;" loading="lazy"></iframe>
 
 > [!info] 分析區間
 > **2025/10/03 – 2026/05/10**（週線視角）
