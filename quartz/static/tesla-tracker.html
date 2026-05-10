@@ -31,7 +31,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 }
 #key-btn:hover{opacity:.85}
 #banner-link{color:var(--yellow);font-size:12px;opacity:.8;white-space:nowrap}
-#banner.hidden{display:none}
+#banner{display:none!important}
 
 /* ── Header ── */
 header{
@@ -245,11 +245,10 @@ header{
 </div>
 
 <script>
-let KEY=localStorage.getItem('fh_k')||'',cd=30,seen=new Set();
+const PRESET_KEY='d80b2n9r01qq9ln37fagd80b2n9r01qq9ln37fb0';
+let KEY=PRESET_KEY||localStorage.getItem('fh_k')||'',cd=30,seen=new Set();
 const $=id=>document.getElementById(id);
 
-$('key-in').value=KEY?'••••••••••••••••':'' ;
-$('key-btn').onclick=()=>{const v=$('key-in').value.trim();if(!v||v[0]==='•')return;KEY=v;localStorage.setItem('fh_k',KEY);$('key-in').value='••••••••••••••••';boot()};
 $('ref-btn').onclick=()=>KEY&&fetchNews();
 if(KEY)boot();
 
