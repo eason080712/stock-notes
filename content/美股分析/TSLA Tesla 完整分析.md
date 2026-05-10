@@ -164,3 +164,10 @@ sector: 電動車 / 能源 / AI
 ---
 
 *分析日期：2026-05-10 | 現價：$411.79 | 分析框架：SNR 技術分析*
+
+
+---
+
+## 即時股價與新聞
+
+<iframe src="/stock-notes/static/tesla-tracker.html" style="width:100%;height:900px;border:none;border-radius:12px;" loading="lazy"></iframe>
