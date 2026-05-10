@@ -7,6 +7,8 @@ sector: 電動車 / 能源 / AI
 
 # Tesla (TSLA) 完整 SNR 技術分析
 
+<iframe src="/stock-notes/static/tesla-tracker.html" style="width:100%;height:820px;border:none;border-radius:12px;display:block;margin-bottom:2rem;" loading="lazy"></iframe>
+
 > [!info] 分析區間
 > **2025/10/03 – 2026/05/10**（週線視角）
 > 現價：**$411.79**（2026/05/07）｜52週低：$273.21｜ATH：$498.83（2025/12/22）
@@ -165,9 +167,3 @@ sector: 電動車 / 能源 / AI
 
 *分析日期：2026-05-10 | 現價：$411.79 | 分析框架：SNR 技術分析*
 
-
----
-
-## 即時股價與新聞
-
-<iframe src="/stock-notes/static/tesla-tracker.html" style="width:100%;height:900px;border:none;border-radius:12px;" loading="lazy"></iframe>
