@@ -1,593 +1,326 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TSLA Tesla 即時動態</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TSLA · Tesla 即時動態</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#09090b;--surface:#18181b;--card:#1c1c1f;--border:#27272a;
+  --text:#fafafa;--muted:#71717a;--sub:#a1a1aa;
+  --red:#e31937;--green:#22c55e;--yellow:#f59e0b;
+  --red-dim:#3b0d10;--green-dim:#052e16;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px}
 
-    :root {
-      --bg: #0d1117;
-      --surface: #161b22;
-      --surface2: #21262d;
-      --border: #30363d;
-      --text: #e6edf3;
-      --muted: #8b949e;
-      --accent: #e31937;
-      --green: #3fb950;
-      --red: #f85149;
-      --yellow: #d29922;
-    }
+/* ── API Banner ── */
+#banner{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 20px;background:#1a1100;border-bottom:1px solid #3d2600;
+}
+#banner-label{color:var(--yellow);font-size:12px;font-weight:700;white-space:nowrap}
+#key-in{
+  flex:1;min-width:220px;background:#09090b;border:1px solid #3d2600;
+  border-radius:8px;padding:7px 12px;color:var(--text);font-size:13px;font-family:monospace;
+}
+#key-in:focus{outline:none;border-color:var(--yellow)}
+#key-btn{
+  background:var(--yellow);color:#000;border:none;border-radius:8px;
+  padding:7px 18px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;
+}
+#key-btn:hover{opacity:.85}
+#banner-link{color:var(--yellow);font-size:12px;opacity:.8;white-space:nowrap}
+#banner.hidden{display:none}
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      min-height: 100vh;
-    }
+/* ── Header ── */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  background:var(--surface);
+}
+.hd-left{display:flex;align-items:center;gap:14px}
+.logo{
+  width:40px;height:40px;border-radius:10px;
+  background:linear-gradient(135deg,#cc0000,#e31937);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:900;color:#fff;letter-spacing:-1px;
+}
+.company-name{font-size:17px;font-weight:700}
+.company-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.hd-right{display:flex;align-items:center;gap:16px}
+.live-badge{
+  display:flex;align-items:center;gap:6px;
+  background:var(--green-dim);border:1px solid #166534;
+  padding:4px 10px;border-radius:20px;
+}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.live-badge span{font-size:11px;font-weight:700;color:var(--green)}
+.live-badge.off{background:#1a1a1a;border-color:var(--border)}
+.live-badge.off .live-dot{background:var(--muted);animation:none}
+.live-badge.off span{color:var(--muted)}
+#update-time{font-size:12px;color:var(--muted)}
 
-    /* API Key Setup Banner */
-    #setup-banner {
-      background: linear-gradient(135deg, #1a1a2e, #16213e);
-      border-bottom: 1px solid var(--yellow);
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-    #setup-banner .label { color: var(--yellow); font-weight: 600; white-space: nowrap; }
-    #api-key-input {
-      flex: 1; min-width: 260px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 8px 12px;
-      color: var(--text);
-      font-size: 14px;
-      font-family: monospace;
-    }
-    #api-key-input:focus { outline: none; border-color: var(--yellow); }
-    #save-key-btn {
-      background: var(--yellow);
-      color: #000;
-      border: none;
-      border-radius: 6px;
-      padding: 8px 20px;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    #save-key-btn:hover { opacity: 0.85; }
-    #setup-banner a {
-      color: var(--yellow);
-      font-size: 13px;
-      white-space: nowrap;
-    }
+/* ── Layout ── */
+.body{display:grid;grid-template-columns:300px 1fr;height:calc(100vh - 96px);overflow:hidden}
 
-    /* Navbar */
-    nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 24px;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface);
-    }
-    .nav-left { display: flex; align-items: center; gap: 12px; }
-    .tsla-logo {
-      width: 36px; height: 36px;
-      background: var(--accent);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: 14px; color: white;
-    }
-    nav h1 { font-size: 18px; font-weight: 700; }
-    nav span { color: var(--muted); font-size: 14px; }
+/* ── Left ── */
+.left{
+  border-right:1px solid var(--border);
+  overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;
+}
+.left::-webkit-scrollbar{width:4px}
+.left::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
-    .nav-right { display: flex; align-items: center; gap: 12px; }
-    #status-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--muted);
-    }
-    #status-dot.live { background: var(--green); animation: pulse 2s infinite; }
-    #status-dot.error { background: var(--red); }
-    @keyframes pulse {
-      0%,100% { opacity: 1; } 50% { opacity: 0.4; }
-    }
-    #status-text { font-size: 13px; color: var(--muted); }
-    #last-update { font-size: 13px; color: var(--muted); }
+/* Price Card */
+.price-card{
+  background:linear-gradient(145deg,#1a0505,#1c1c1f);
+  border:1px solid #3a1010;border-radius:14px;padding:20px;
+}
+.price-tag{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+.price-main{font-size:44px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;margin-bottom:8px;letter-spacing:-1px}
+.price-change{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 12px;border-radius:20px;font-size:14px;font-weight:700;margin-bottom:18px;
+}
+.price-change.up{background:var(--green-dim);color:var(--green)}
+.price-change.down{background:var(--red-dim);color:var(--red)}
+.price-change.flat{background:#27272a;color:var(--muted)}
 
-    /* Layout */
-    .container { display: grid; grid-template-columns: 340px 1fr; gap: 0; height: calc(100vh - 115px); }
+.divider{height:1px;background:var(--border);margin:16px 0}
 
-    /* Left Panel - Stock Info */
-    .left-panel {
-      border-right: 1px solid var(--border);
-      overflow-y: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.stat-val{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
 
-    .price-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
-    }
-    .price-card .symbol { color: var(--muted); font-size: 13px; margin-bottom: 4px; }
-    .price-card .price {
-      font-size: 42px;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      margin-bottom: 6px;
-    }
-    .price-card .change { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
-    .price-card .change.up { color: var(--green); }
-    .price-card .change.down { color: var(--red); }
-    .price-card .change.flat { color: var(--muted); }
+/* Countdown */
+.countdown{margin-top:16px}
+.cd-bar{height:3px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:5px}
+.cd-fill{height:100%;background:var(--red);border-radius:3px;transition:width 1s linear}
+.cd-txt{font-size:11px;color:var(--muted);text-align:right}
 
-    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .stat { }
-    .stat .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .stat .stat-value { font-size: 14px; font-weight: 600; margin-top: 2px; }
+/* Sentiment */
+.sent-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+.card-hd{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px}
+.sent-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sent-icon{font-size:13px;width:20px;text-align:center}
+.sent-bar-wrap{flex:1;height:6px;background:var(--border);border-radius:6px;overflow:hidden}
+.sent-bar-fill{height:100%;border-radius:6px;transition:width .6s ease}
+.sent-pct{font-size:12px;font-weight:600;width:34px;text-align:right;font-variant-numeric:tabular-nums}
+.sent-summary{font-size:12px;color:var(--sub);margin-top:10px;padding-top:10px;border-top:1px solid var(--border);line-height:1.5}
 
-    .refresh-bar {
-      background: var(--surface2);
-      border-radius: 4px;
-      height: 4px;
-      margin-top: 16px;
-      overflow: hidden;
-    }
-    .refresh-progress {
-      height: 100%;
-      background: var(--accent);
-      width: 100%;
-      transition: width 1s linear;
-    }
+/* ── Right ── */
+.right{display:flex;flex-direction:column;overflow:hidden}
+.news-hd{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.news-hd-left{display:flex;align-items:center;gap:8px}
+.news-hd h2{font-size:14px;font-weight:700}
+.news-hd-count{
+  font-size:11px;font-weight:700;background:var(--red);color:#fff;
+  padding:2px 7px;border-radius:10px;
+}
+.refresh-btn{
+  font-size:12px;color:var(--muted);background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:5px 12px;cursor:pointer;
+}
+.refresh-btn:hover{color:var(--text);border-color:var(--sub)}
 
-    /* Sentiment Card */
-    .sentiment-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-    }
-    .card-title {
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
-    }
-    .sentiment-meter { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
-    .sentiment-bar { flex: 1; height: 8px; border-radius: 4px; background: var(--surface2); overflow: hidden; }
-    .sentiment-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
-    .sentiment-label { font-size: 12px; width: 60px; text-align: right; color: var(--muted); }
-    #sentiment-summary { font-size: 13px; color: var(--muted); }
+.news-scroll{flex:1;overflow-y:auto;padding:12px}
+.news-scroll::-webkit-scrollbar{width:4px}
+.news-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
-    /* Right Panel - News */
-    .right-panel { overflow-y: auto; }
+/* News Item */
+.ni{
+  display:flex;gap:12px;padding:12px;border-radius:12px;
+  border:1px solid var(--border);background:var(--card);
+  margin-bottom:8px;text-decoration:none;color:inherit;
+  transition:border-color .15s,background .15s;
+}
+.ni:hover{border-color:#52525b;background:#1f1f23}
+.ni.fresh{border-color:var(--green);animation:pop .35s ease}
+@keyframes pop{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.ni-img{width:80px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--border)}
+.ni-body{flex:1;min-width:0}
+.ni-meta{display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap}
+.ni-src{font-size:10px;font-weight:700;color:var(--muted);background:#27272a;padding:2px 7px;border-radius:4px}
+.ni-ago{font-size:11px;color:var(--muted)}
+.badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px}
+.b-new{background:#052e16;color:var(--green)}
+.b-hot{background:#3b1219;color:var(--red)}
+.ni-title{font-size:13px;font-weight:600;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ni-desc{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
-    .news-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      background: var(--bg);
-      z-index: 10;
-    }
-    .news-header h2 { font-size: 15px; font-weight: 600; }
-    #news-count { font-size: 13px; color: var(--muted); }
+/* States */
+.empty{text-align:center;padding:60px 16px;color:var(--muted)}
+.empty .ico{font-size:36px;margin-bottom:12px}
+.empty p{font-size:14px;color:var(--sub)}
+.empty small{font-size:12px;margin-top:4px;display:block}
+.spin{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:sp .7s linear infinite;margin:0 auto 12px}
+@keyframes sp{to{transform:rotate(360deg)}}
 
-    .news-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
-
-    .news-item {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px 16px;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      display: flex;
-      gap: 12px;
-      text-decoration: none;
-      color: inherit;
-    }
-    .news-item:hover { border-color: var(--accent); background: var(--surface2); }
-    .news-item.new-item {
-      border-color: var(--green);
-      animation: fadeInDown 0.4s ease;
-    }
-    @keyframes fadeInDown {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .news-thumb {
-      width: 72px; height: 54px;
-      border-radius: 6px;
-      object-fit: cover;
-      flex-shrink: 0;
-      background: var(--surface2);
-    }
-    .news-body { flex: 1; min-width: 0; }
-    .news-meta {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 6px;
-      flex-wrap: wrap;
-    }
-    .news-source {
-      font-size: 11px;
-      color: var(--muted);
-      background: var(--surface2);
-      padding: 2px 8px;
-      border-radius: 4px;
-    }
-    .news-time { font-size: 11px; color: var(--muted); }
-    .news-badge {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 4px;
-      text-transform: uppercase;
-    }
-    .badge-new { background: #1a4731; color: var(--green); }
-    .badge-bullish { background: #1a4731; color: var(--green); }
-    .badge-bearish { background: #3b1219; color: var(--red); }
-
-    .news-title {
-      font-size: 14px;
-      font-weight: 600;
-      line-height: 1.4;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .news-summary {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 4px;
-      line-height: 1.4;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    /* Loading / Error / Empty states */
-    .state-msg {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--muted);
-    }
-    .state-msg .icon { font-size: 40px; margin-bottom: 12px; }
-    .state-msg p { font-size: 15px; }
-    .state-msg small { font-size: 13px; margin-top: 6px; display: block; }
-
-    .spinner {
-      width: 32px; height: 32px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 12px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    @media (max-width: 768px) {
-      .container { grid-template-columns: 1fr; height: auto; }
-      .left-panel { border-right: none; border-bottom: 1px solid var(--border); }
-    }
-  </style>
+@media(max-width:700px){
+  .body{grid-template-columns:1fr;height:auto}
+  .left{border-right:none;border-bottom:1px solid var(--border)}
+}
+</style>
 </head>
 <body>
 
-<!-- API Key Setup -->
-<div id="setup-banner">
-  <span class="label">🔑 Finnhub API Key</span>
-  <input id="api-key-input" type="text" placeholder="輸入你的 Finnhub API Key（免費申請）" autocomplete="off">
-  <button id="save-key-btn">套用</button>
-  <a href="https://finnhub.io/register" target="_blank">→ 免費申請 API Key</a>
+<div id="banner">
+  <span id="banner-label">🔑 請設定 Finnhub API Key</span>
+  <input id="key-in" type="password" placeholder="貼上 API Key...">
+  <button id="key-btn">套用</button>
+  <a id="banner-link" href="https://finnhub.io/register" target="_blank">免費申請 →</a>
 </div>
 
-<!-- Navbar -->
-<nav>
-  <div class="nav-left">
-    <div class="tsla-logo">T</div>
+<header>
+  <div class="hd-left">
+    <div class="logo">T</div>
     <div>
-      <h1>Tesla, Inc. <span style="color:var(--muted);font-weight:400">TSLA · NASDAQ</span></h1>
+      <div class="company-name">Tesla, Inc.</div>
+      <div class="company-sub">TSLA &nbsp;·&nbsp; NASDAQ &nbsp;·&nbsp; 電動車 / AI / 能源</div>
     </div>
   </div>
-  <div class="nav-right">
-    <div id="status-dot"></div>
-    <span id="status-text">等待 API Key</span>
-    <span id="last-update"></span>
+  <div class="hd-right">
+    <div class="live-badge off" id="live-badge"><div class="live-dot"></div><span>離線</span></div>
+    <div id="update-time">--</div>
   </div>
-</nav>
+</header>
 
-<!-- Main Layout -->
-<div class="container">
-
-  <!-- Left: Stock Price -->
-  <div class="left-panel">
-
+<div class="body">
+  <div class="left">
     <div class="price-card">
-      <div class="symbol">TSLA · 美股即時報價</div>
-      <div class="price" id="price">---.--</div>
-      <div class="change flat" id="change">-- (---%)</div>
-
-      <div class="stats-grid">
-        <div class="stat">
-          <div class="stat-label">開盤</div>
-          <div class="stat-value" id="open">---</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">前收</div>
-          <div class="stat-value" id="prev-close">---</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">今日高</div>
-          <div class="stat-value" id="high">---</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">今日低</div>
-          <div class="stat-value" id="low">---</div>
-        </div>
+      <div class="price-tag">即時股價 · USD</div>
+      <div class="price-main" id="price">---.--</div>
+      <div class="price-change flat" id="change">-- &nbsp;(--%)</div>
+      <div class="divider"></div>
+      <div class="stats">
+        <div><div class="stat-lbl">開盤</div><div class="stat-val" id="s-o">---</div></div>
+        <div><div class="stat-lbl">前收</div><div class="stat-val" id="s-pc">---</div></div>
+        <div><div class="stat-lbl">今日高</div><div class="stat-val" id="s-h" style="color:var(--green)">---</div></div>
+        <div><div class="stat-lbl">今日低</div><div class="stat-val" id="s-l" style="color:var(--red)">---</div></div>
       </div>
-
-      <div class="refresh-bar"><div class="refresh-progress" id="refresh-progress"></div></div>
-      <div style="font-size:11px;color:var(--muted);margin-top:6px;text-align:right">每 30 秒自動更新股價</div>
+      <div class="countdown">
+        <div class="cd-bar"><div class="cd-fill" id="cd-fill"></div></div>
+        <div class="cd-txt" id="cd-txt">-- 秒後更新</div>
+      </div>
     </div>
 
-    <div class="sentiment-card">
-      <div class="card-title">新聞情緒分析</div>
-      <div class="sentiment-meter">
-        <span style="font-size:12px;color:var(--green);width:40px">看多</span>
-        <div class="sentiment-bar"><div class="sentiment-fill" id="bull-bar" style="background:var(--green);width:0%"></div></div>
-        <span class="sentiment-label" id="bull-pct">--%</span>
+    <div class="sent-card">
+      <div class="card-hd">新聞情緒分析</div>
+      <div class="sent-row">
+        <span class="sent-icon">📈</span>
+        <div class="sent-bar-wrap"><div class="sent-bar-fill" id="b-fill" style="background:var(--green);width:0%"></div></div>
+        <span class="sent-pct" id="b-pct" style="color:var(--green)">--%</span>
       </div>
-      <div class="sentiment-meter">
-        <span style="font-size:12px;color:var(--red);width:40px">看空</span>
-        <div class="sentiment-bar"><div class="sentiment-fill" id="bear-bar" style="background:var(--red);width:0%"></div></div>
-        <span class="sentiment-label" id="bear-pct">--%</span>
+      <div class="sent-row">
+        <span class="sent-icon">📉</span>
+        <div class="sent-bar-wrap"><div class="sent-bar-fill" id="r-fill" style="background:var(--red);width:0%"></div></div>
+        <span class="sent-pct" id="r-pct" style="color:var(--red)">--%</span>
       </div>
-      <div class="sentiment-meter">
-        <span style="font-size:12px;color:var(--muted);width:40px">中立</span>
-        <div class="sentiment-bar"><div class="sentiment-fill" id="neutral-bar" style="background:var(--muted);width:0%"></div></div>
-        <span class="sentiment-label" id="neutral-pct">--%</span>
+      <div class="sent-row">
+        <span class="sent-icon">📊</span>
+        <div class="sent-bar-wrap"><div class="sent-bar-fill" id="n-fill" style="background:var(--muted);width:0%"></div></div>
+        <span class="sent-pct" id="n-pct" style="color:var(--muted)">--%</span>
       </div>
-      <div id="sentiment-summary" style="margin-top:8px">輸入 API Key 後顯示</div>
+      <div class="sent-summary" id="sent-txt">輸入 API Key 後顯示</div>
     </div>
-
   </div>
 
-  <!-- Right: News Feed -->
-  <div class="right-panel">
-    <div class="news-header">
-      <h2>📰 Tesla 最新消息</h2>
-      <span id="news-count"></span>
-    </div>
-    <div id="news-list" class="news-list">
-      <div class="state-msg">
-        <div class="icon">🔑</div>
-        <p>請輸入 Finnhub API Key</p>
-        <small>在頂部欄位輸入 Key 後按「套用」即可載入即時新聞</small>
+  <div class="right">
+    <div class="news-hd">
+      <div class="news-hd-left">
+        <h2>最新消息</h2>
+        <span class="news-hd-count" id="n-cnt">0</span>
       </div>
+      <button class="refresh-btn" id="ref-btn">↻ 刷新</button>
+    </div>
+    <div class="news-scroll" id="news-list">
+      <div class="empty"><div class="ico">🔑</div><p>請輸入 Finnhub API Key</p><small>填入後按「套用」即可載入即時新聞</small></div>
     </div>
   </div>
 </div>
 
 <script>
-  let API_KEY = localStorage.getItem('finnhub_key') || '';
-  let priceTimer = null;
-  let newsTimer = null;
-  let refreshCountdown = 30;
-  let knownHeadlines = new Set();
+let KEY=localStorage.getItem('fh_k')||'',cd=30,seen=new Set();
+const $=id=>document.getElementById(id);
 
-  // Init
-  const keyInput = document.getElementById('api-key-input');
-  if (API_KEY) keyInput.value = API_KEY;
+$('key-in').value=KEY?'••••••••••••••••':'' ;
+$('key-btn').onclick=()=>{const v=$('key-in').value.trim();if(!v||v[0]==='•')return;KEY=v;localStorage.setItem('fh_k',KEY);$('key-in').value='••••••••••••••••';boot()};
+$('ref-btn').onclick=()=>KEY&&fetchNews();
+if(KEY)boot();
 
-  document.getElementById('save-key-btn').addEventListener('click', () => {
-    const key = keyInput.value.trim();
-    if (!key) return;
-    API_KEY = key;
-    localStorage.setItem('finnhub_key', key);
-    start();
+function boot(){
+  $('banner').classList.add('hidden');
+  fetchPrice();fetchNews();
+  setInterval(fetchPrice,30000);
+  setInterval(fetchNews,300000);
+  setInterval(()=>{cd=Math.max(0,cd-1);$('cd-fill').style.width=(cd/30*100)+'%';$('cd-txt').textContent=cd?cd+' 秒後更新':'更新中...'},1000);
+}
+
+async function fetchPrice(){
+  try{
+    const d=await(await fetch(`https://finnhub.io/api/v1/quote?symbol=TSLA&token=${KEY}`)).json();
+    if(!d.c)throw 0;
+    $('price').textContent=d.c.toFixed(2);
+    const up=d.d>=0,s=up?'+':'';
+    const el=$('change');el.textContent=`${s}${d.d.toFixed(2)}  (${s}${d.dp.toFixed(2)}%)`;el.className='price-change '+(up?'up':'down');
+    $('s-o').textContent=d.o?.toFixed(2)||'---';$('s-pc').textContent=d.pc?.toFixed(2)||'---';
+    $('s-h').textContent=d.h?.toFixed(2)||'---';$('s-l').textContent=d.l?.toFixed(2)||'---';
+    const t=new Date();$('update-time').textContent='更新 '+t.toLocaleTimeString('zh-TW');
+    live(true);cd=30;
+  }catch{live(false);}
+}
+
+async function fetchNews(){
+  if(!seen.size)$('news-list').innerHTML='<div class="empty"><div class="spin"></div><p>載入中...</p></div>';
+  try{
+    const to=new Date(),from=new Date(to-7*864e5),f=d=>d.toISOString().slice(0,10);
+    const[nr,sr]=await Promise.all([
+      fetch(`https://finnhub.io/api/v1/company-news?symbol=TSLA&from=${f(from)}&to=${f(to)}&token=${KEY}`),
+      fetch(`https://finnhub.io/api/v1/news-sentiment?symbol=TSLA&token=${KEY}`)
+    ]);
+    const news=await nr.json();
+    if(sr.ok)renderSent(await sr.json());
+    renderNews(Array.isArray(news)?news:[]);
+  }catch{if(!seen.size)$('news-list').innerHTML='<div class="empty"><div class="ico">⚠️</div><p>載入失敗，請確認 API Key</p></div>';}
+}
+
+function renderNews(arr){
+  arr.sort((a,b)=>b.datetime-a.datetime);
+  const items=arr.slice(0,40);
+  const fresh=items.filter(a=>!seen.has(a.headline));
+  fresh.forEach(a=>seen.add(a.headline));
+  $('n-cnt').textContent=items.length;
+  const list=$('news-list');list.innerHTML='';
+  if(!items.length){list.innerHTML='<div class="empty"><div class="ico">📭</div><p>暫無消息</p></div>';return;}
+  items.forEach(item=>{
+    const age=Date.now()/1000-item.datetime;
+    const isNew=fresh.includes(item)&&seen.size>fresh.length;
+    const a=document.createElement('a');
+    a.className='ni'+(isNew?' fresh':'');a.href=item.url;a.target='_blank';a.rel='noopener';
+    a.innerHTML=`${item.image?`<img class="ni-img" src="${item.image}" loading="lazy" onerror="this.remove()">`:''}<div class="ni-body"><div class="ni-meta"><span class="ni-src">${item.source||'媒體'}</span><span class="ni-ago">${age2txt(age)}</span>${age<1800?'<span class="badge b-hot">🔥 最新</span>':age<3600?'<span class="badge b-new">New</span>':''}</div><div class="ni-title">${item.headline}</div>${item.summary?`<div class="ni-desc">${item.summary}</div>`:''}</div>`;
+    list.appendChild(a);
   });
+}
 
-  // If key already saved, auto-start
-  if (API_KEY) start();
+function renderSent(d){
+  if(!d?.sentiment)return;
+  const s=d.sentiment,bull=Math.round((s.bullishPercent||0)*100),bear=Math.round((s.bearishPercent||0)*100),neu=Math.max(0,100-bull-bear);
+  $('b-fill').style.width=bull+'%';$('b-pct').textContent=bull+'%';
+  $('r-fill').style.width=bear+'%';$('r-pct').textContent=bear+'%';
+  $('n-fill').style.width=neu+'%';$('n-pct').textContent=neu+'%';
+  $('sent-txt').textContent=bull>55?`📈 市場偏多（${bull}% 看漲）`:bear>45?`📉 市場偏空（${bear}% 看跌）`:'📊 多空情緒中立';
+}
 
-  function start() {
-    clearInterval(priceTimer);
-    clearInterval(newsTimer);
-    fetchPrice();
-    fetchNews();
-    priceTimer = setInterval(fetchPrice, 30000);
-    newsTimer = setInterval(fetchNews, 300000); // news every 5 min
-    startCountdown();
-  }
-
-  // ── Stock Price ──────────────────────────────
-  async function fetchPrice() {
-    try {
-      const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=TSLA&token=${API_KEY}`);
-      if (!r.ok) throw new Error(r.status);
-      const d = await r.json();
-      if (!d.c) throw new Error('no data');
-      updatePrice(d);
-      setStatus('live', '即時更新中');
-    } catch(e) {
-      setStatus('error', '股價載入失敗');
-    }
-  }
-
-  function updatePrice(d) {
-    const price = d.c;
-    const change = d.d;
-    const changePct = d.dp;
-    const isUp = change >= 0;
-
-    document.getElementById('price').textContent = price.toFixed(2);
-
-    const changeEl = document.getElementById('change');
-    const sign = isUp ? '+' : '';
-    changeEl.textContent = `${sign}${change.toFixed(2)}  (${sign}${changePct.toFixed(2)}%)`;
-    changeEl.className = `change ${isUp ? 'up' : 'down'}`;
-
-    document.getElementById('open').textContent = d.o?.toFixed(2) || '---';
-    document.getElementById('prev-close').textContent = d.pc?.toFixed(2) || '---';
-    document.getElementById('high').textContent = d.h?.toFixed(2) || '---';
-    document.getElementById('low').textContent = d.l?.toFixed(2) || '---';
-
-    const now = new Date();
-    document.getElementById('last-update').textContent =
-      `更新：${now.toLocaleTimeString('zh-TW')}`;
-
-    refreshCountdown = 30;
-  }
-
-  // Countdown progress bar
-  function startCountdown() {
-    setInterval(() => {
-      refreshCountdown = Math.max(0, refreshCountdown - 1);
-      const pct = (refreshCountdown / 30) * 100;
-      document.getElementById('refresh-progress').style.width = pct + '%';
-    }, 1000);
-  }
-
-  // ── News ─────────────────────────────────────
-  async function fetchNews() {
-    const list = document.getElementById('news-list');
-    if (knownHeadlines.size === 0) {
-      list.innerHTML = `<div class="state-msg"><div class="spinner"></div><p>載入中...</p></div>`;
-    }
-
-    try {
-      const to = new Date();
-      const from = new Date(to - 7 * 24 * 60 * 60 * 1000);
-      const fmt = d => d.toISOString().split('T')[0];
-
-      const [newsRes, sentRes] = await Promise.all([
-        fetch(`https://finnhub.io/api/v1/company-news?symbol=TSLA&from=${fmt(from)}&to=${fmt(to)}&token=${API_KEY}`),
-        fetch(`https://finnhub.io/api/v1/news-sentiment?symbol=TSLA&token=${API_KEY}`)
-      ]);
-
-      if (!newsRes.ok) throw new Error(newsRes.status);
-      const news = await newsRes.json();
-
-      if (sentRes.ok) {
-        const sent = await sentRes.json();
-        updateSentiment(sent);
-      }
-
-      renderNews(news);
-    } catch(e) {
-      if (knownHeadlines.size === 0) {
-        list.innerHTML = `<div class="state-msg"><div class="icon">⚠️</div><p>新聞載入失敗</p><small>請確認 API Key 是否正確</small></div>`;
-      }
-      setStatus('error', '載入失敗');
-    }
-  }
-
-  function renderNews(articles) {
-    if (!articles || articles.length === 0) {
-      document.getElementById('news-list').innerHTML =
-        `<div class="state-msg"><div class="icon">📭</div><p>目前無最新消息</p></div>`;
-      return;
-    }
-
-    // Sort by datetime desc
-    articles.sort((a, b) => b.datetime - a.datetime);
-    const top = articles.slice(0, 30);
-
-    const newItems = top.filter(a => !knownHeadlines.has(a.headline));
-    newItems.forEach(a => knownHeadlines.add(a.headline));
-
-    const list = document.getElementById('news-list');
-    list.innerHTML = '';
-    document.getElementById('news-count').textContent = `${top.length} 則`;
-
-    top.forEach((item, idx) => {
-      const isNew = newItems.includes(item) && knownHeadlines.size > newItems.length;
-      const age = Date.now() / 1000 - item.datetime;
-      const isRecent = age < 3600; // within 1 hour
-
-      const el = document.createElement('a');
-      el.className = `news-item${isNew ? ' new-item' : ''}`;
-      el.href = item.url;
-      el.target = '_blank';
-      el.rel = 'noopener';
-
-      const timeStr = formatTime(item.datetime);
-      const badge = isRecent
-        ? `<span class="news-badge badge-new">最新</span>` : '';
-
-      el.innerHTML = `
-        ${item.image ? `<img class="news-thumb" src="${item.image}" onerror="this.style.display='none'" loading="lazy">` : ''}
-        <div class="news-body">
-          <div class="news-meta">
-            <span class="news-source">${item.source || '媒體'}</span>
-            <span class="news-time">${timeStr}</span>
-            ${badge}
-          </div>
-          <div class="news-title">${item.headline}</div>
-          ${item.summary ? `<div class="news-summary">${item.summary}</div>` : ''}
-        </div>
-      `;
-
-      list.appendChild(el);
-    });
-  }
-
-  function updateSentiment(sent) {
-    if (!sent?.sentiment) return;
-    const s = sent.sentiment;
-    const bull = ((s.bullishPercent || 0) * 100).toFixed(0);
-    const bear = ((s.bearishPercent || 0) * 100).toFixed(0);
-    const neutral = Math.max(0, 100 - bull - bear);
-
-    document.getElementById('bull-bar').style.width = bull + '%';
-    document.getElementById('bear-bar').style.width = bear + '%';
-    document.getElementById('neutral-bar').style.width = neutral + '%';
-    document.getElementById('bull-pct').textContent = bull + '%';
-    document.getElementById('bear-pct').textContent = bear + '%';
-    document.getElementById('neutral-pct').textContent = neutral + '%';
-
-    const summary = bull > 60 ? '📈 整體偏多，市場情緒樂觀'
-      : bear > 40 ? '📉 整體偏空，市場情緒保守'
-      : '📊 市場情緒中性';
-    document.getElementById('sentiment-summary').textContent = summary;
-  }
-
-  function formatTime(unix) {
-    const d = new Date(unix * 1000);
-    const now = new Date();
-    const diff = (now - d) / 1000;
-    if (diff < 60) return '剛剛';
-    if (diff < 3600) return `${Math.floor(diff/60)} 分鐘前`;
-    if (diff < 86400) return `${Math.floor(diff/3600)} 小時前`;
-    return d.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' });
-  }
-
-  function setStatus(state, text) {
-    const dot = document.getElementById('status-dot');
-    dot.className = state === 'live' ? 'live' : state === 'error' ? 'error' : '';
-    document.getElementById('status-text').textContent = text;
-  }
+function age2txt(s){
+  if(s<60)return '剛剛';if(s<3600)return Math.floor(s/60)+' 分鐘前';
+  if(s<86400)return Math.floor(s/3600)+' 小時前';return Math.floor(s/86400)+' 天前';
+}
+function live(on){const b=$('live-badge');b.className='live-badge'+(on?'':' off');b.querySelector('span').textContent=on?'即時更新中':'已斷線';}
 </script>
 </body>
 </html>
