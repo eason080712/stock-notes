@@ -26,3 +26,7 @@ title: 股市分析筆記
 - [[TSLA Tesla 完整分析|TSLA Tesla]]
 - [[SUUN PowerBank 完整分析|SUUN PowerBank]]
 - [[VCX Fundrise Innovation Fund 完整分析|VCX Fundrise Innovation Fund]]
+
+## 即時追蹤
+
+- [TSLA Tesla 即時股價 & 新聞](tesla-tracker.html)

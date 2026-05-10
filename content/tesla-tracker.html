@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TSLA Tesla 即時動態</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #e31937;
+      --green: #3fb950;
+      --red: #f85149;
+      --yellow: #d29922;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* API Key Setup Banner */
+    #setup-banner {
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      border-bottom: 1px solid var(--yellow);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    #setup-banner .label { color: var(--yellow); font-weight: 600; white-space: nowrap; }
+    #api-key-input {
+      flex: 1; min-width: 260px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: monospace;
+    }
+    #api-key-input:focus { outline: none; border-color: var(--yellow); }
+    #save-key-btn {
+      background: var(--yellow);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 20px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #save-key-btn:hover { opacity: 0.85; }
+    #setup-banner a {
+      color: var(--yellow);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    /* Navbar */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .nav-left { display: flex; align-items: center; gap: 12px; }
+    .tsla-logo {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 14px; color: white;
+    }
+    nav h1 { font-size: 18px; font-weight: 700; }
+    nav span { color: var(--muted); font-size: 14px; }
+
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    #status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    #status-dot.live { background: var(--green); animation: pulse 2s infinite; }
+    #status-dot.error { background: var(--red); }
+    @keyframes pulse {
+      0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+    }
+    #status-text { font-size: 13px; color: var(--muted); }
+    #last-update { font-size: 13px; color: var(--muted); }
+
+    /* Layout */
+    .container { display: grid; grid-template-columns: 340px 1fr; gap: 0; height: calc(100vh - 115px); }
+
+    /* Left Panel - Stock Info */
+    .left-panel {
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .price-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .price-card .symbol { color: var(--muted); font-size: 13px; margin-bottom: 4px; }
+    .price-card .price {
+      font-size: 42px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 6px;
+    }
+    .price-card .change { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+    .price-card .change.up { color: var(--green); }
+    .price-card .change.down { color: var(--red); }
+    .price-card .change.flat { color: var(--muted); }
+
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat { }
+    .stat .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat .stat-value { font-size: 14px; font-weight: 600; margin-top: 2px; }
+
+    .refresh-bar {
+      background: var(--surface2);
+      border-radius: 4px;
+      height: 4px;
+      margin-top: 16px;
+      overflow: hidden;
+    }
+    .refresh-progress {
+      height: 100%;
+      background: var(--accent);
+      width: 100%;
+      transition: width 1s linear;
+    }
+
+    /* Sentiment Card */
+    .sentiment-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .card-title {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    .sentiment-meter { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+    .sentiment-bar { flex: 1; height: 8px; border-radius: 4px; background: var(--surface2); overflow: hidden; }
+    .sentiment-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+    .sentiment-label { font-size: 12px; width: 60px; text-align: right; color: var(--muted); }
+    #sentiment-summary { font-size: 13px; color: var(--muted); }
+
+    /* Right Panel - News */
+    .right-panel { overflow-y: auto; }
+
+    .news-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 10;
+    }
+    .news-header h2 { font-size: 15px; font-weight: 600; }
+    #news-count { font-size: 13px; color: var(--muted); }
+
+    .news-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+    .news-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      display: flex;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .news-item:hover { border-color: var(--accent); background: var(--surface2); }
+    .news-item.new-item {
+      border-color: var(--green);
+      animation: fadeInDown 0.4s ease;
+    }
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .news-thumb {
+      width: 72px; height: 54px;
+      border-radius: 6px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--surface2);
+    }
+    .news-body { flex: 1; min-width: 0; }
+    .news-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .news-source {
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--surface2);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .news-time { font-size: 11px; color: var(--muted); }
+    .news-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .badge-new { background: #1a4731; color: var(--green); }
+    .badge-bullish { background: #1a4731; color: var(--green); }
+    .badge-bearish { background: #3b1219; color: var(--red); }
+
+    .news-title {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .news-summary {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Loading / Error / Empty states */
+    .state-msg {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .state-msg .icon { font-size: 40px; margin-bottom: 12px; }
+    .state-msg p { font-size: 15px; }
+    .state-msg small { font-size: 13px; margin-top: 6px; display: block; }
+
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 768px) {
+      .container { grid-template-columns: 1fr; height: auto; }
+      .left-panel { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- API Key Setup -->
+<div id="setup-banner">
+  <span class="label">🔑 Finnhub API Key</span>
+  <input id="api-key-input" type="text" placeholder="輸入你的 Finnhub API Key（免費申請）" autocomplete="off">
+  <button id="save-key-btn">套用</button>
+  <a href="https://finnhub.io/register" target="_blank">→ 免費申請 API Key</a>
+</div>
+
+<!-- Navbar -->
+<nav>
+  <div class="nav-left">
+    <div class="tsla-logo">T</div>
+    <div>
+      <h1>Tesla, Inc. <span style="color:var(--muted);font-weight:400">TSLA · NASDAQ</span></h1>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div id="status-dot"></div>
+    <span id="status-text">等待 API Key</span>
+    <span id="last-update"></span>
+  </div>
+</nav>
+
+<!-- Main Layout -->
+<div class="container">
+
+  <!-- Left: Stock Price -->
+  <div class="left-panel">
+
+    <div class="price-card">
+      <div class="symbol">TSLA · 美股即時報價</div>
+      <div class="price" id="price">---.--</div>
+      <div class="change flat" id="change">-- (---%)</div>
+
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="stat-label">開盤</div>
+          <div class="stat-value" id="open">---</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">前收</div>
+          <div class="stat-value" id="prev-close">---</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">今日高</div>
+          <div class="stat-value" id="high">---</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">今日低</div>
+          <div class="stat-value" id="low">---</div>
+        </div>
+      </div>
+
+      <div class="refresh-bar"><div class="refresh-progress" id="refresh-progress"></div></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;text-align:right">每 30 秒自動更新股價</div>
+    </div>
+
+    <div class="sentiment-card">
+      <div class="card-title">新聞情緒分析</div>
+      <div class="sentiment-meter">
+        <span style="font-size:12px;color:var(--green);width:40px">看多</span>
+        <div class="sentiment-bar"><div class="sentiment-fill" id="bull-bar" style="background:var(--green);width:0%"></div></div>
+        <span class="sentiment-label" id="bull-pct">--%</span>
+      </div>
+      <div class="sentiment-meter">
+        <span style="font-size:12px;color:var(--red);width:40px">看空</span>
+        <div class="sentiment-bar"><div class="sentiment-fill" id="bear-bar" style="background:var(--red);width:0%"></div></div>
+        <span class="sentiment-label" id="bear-pct">--%</span>
+      </div>
+      <div class="sentiment-meter">
+        <span style="font-size:12px;color:var(--muted);width:40px">中立</span>
+        <div class="sentiment-bar"><div class="sentiment-fill" id="neutral-bar" style="background:var(--muted);width:0%"></div></div>
+        <span class="sentiment-label" id="neutral-pct">--%</span>
+      </div>
+      <div id="sentiment-summary" style="margin-top:8px">輸入 API Key 後顯示</div>
+    </div>
+
+  </div>
+
+  <!-- Right: News Feed -->
+  <div class="right-panel">
+    <div class="news-header">
+      <h2>📰 Tesla 最新消息</h2>
+      <span id="news-count"></span>
+    </div>
+    <div id="news-list" class="news-list">
+      <div class="state-msg">
+        <div class="icon">🔑</div>
+        <p>請輸入 Finnhub API Key</p>
+        <small>在頂部欄位輸入 Key 後按「套用」即可載入即時新聞</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let API_KEY = localStorage.getItem('finnhub_key') || '';
+  let priceTimer = null;
+  let newsTimer = null;
+  let refreshCountdown = 30;
+  let knownHeadlines = new Set();
+
+  // Init
+  const keyInput = document.getElementById('api-key-input');
+  if (API_KEY) keyInput.value = API_KEY;
+
+  document.getElementById('save-key-btn').addEventListener('click', () => {
+    const key = keyInput.value.trim();
+    if (!key) return;
+    API_KEY = key;
+    localStorage.setItem('finnhub_key', key);
+    start();
+  });
+
+  // If key already saved, auto-start
+  if (API_KEY) start();
+
+  function start() {
+    clearInterval(priceTimer);
+    clearInterval(newsTimer);
+    fetchPrice();
+    fetchNews();
+    priceTimer = setInterval(fetchPrice, 30000);
+    newsTimer = setInterval(fetchNews, 300000); // news every 5 min
+    startCountdown();
+  }
+
+  // ── Stock Price ──────────────────────────────
+  async function fetchPrice() {
+    try {
+      const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=TSLA&token=${API_KEY}`);
+      if (!r.ok) throw new Error(r.status);
+      const d = await r.json();
+      if (!d.c) throw new Error('no data');
+      updatePrice(d);
+      setStatus('live', '即時更新中');
+    } catch(e) {
+      setStatus('error', '股價載入失敗');
+    }
+  }
+
+  function updatePrice(d) {
+    const price = d.c;
+    const change = d.d;
+    const changePct = d.dp;
+    const isUp = change >= 0;
+
+    document.getElementById('price').textContent = price.toFixed(2);
+
+    const changeEl = document.getElementById('change');
+    const sign = isUp ? '+' : '';
+    changeEl.textContent = `${sign}${change.toFixed(2)}  (${sign}${changePct.toFixed(2)}%)`;
+    changeEl.className = `change ${isUp ? 'up' : 'down'}`;
+
+    document.getElementById('open').textContent = d.o?.toFixed(2) || '---';
+    document.getElementById('prev-close').textContent = d.pc?.toFixed(2) || '---';
+    document.getElementById('high').textContent = d.h?.toFixed(2) || '---';
+    document.getElementById('low').textContent = d.l?.toFixed(2) || '---';
+
+    const now = new Date();
+    document.getElementById('last-update').textContent =
+      `更新：${now.toLocaleTimeString('zh-TW')}`;
+
+    refreshCountdown = 30;
+  }
+
+  // Countdown progress bar
+  function startCountdown() {
+    setInterval(() => {
+      refreshCountdown = Math.max(0, refreshCountdown - 1);
+      const pct = (refreshCountdown / 30) * 100;
+      document.getElementById('refresh-progress').style.width = pct + '%';
+    }, 1000);
+  }
+
+  // ── News ─────────────────────────────────────
+  async function fetchNews() {
+    const list = document.getElementById('news-list');
+    if (knownHeadlines.size === 0) {
+      list.innerHTML = `<div class="state-msg"><div class="spinner"></div><p>載入中...</p></div>`;
+    }
+
+    try {
+      const to = new Date();
+      const from = new Date(to - 7 * 24 * 60 * 60 * 1000);
+      const fmt = d => d.toISOString().split('T')[0];
+
+      const [newsRes, sentRes] = await Promise.all([
+        fetch(`https://finnhub.io/api/v1/company-news?symbol=TSLA&from=${fmt(from)}&to=${fmt(to)}&token=${API_KEY}`),
+        fetch(`https://finnhub.io/api/v1/news-sentiment?symbol=TSLA&token=${API_KEY}`)
+      ]);
+
+      if (!newsRes.ok) throw new Error(newsRes.status);
+      const news = await newsRes.json();
+
+      if (sentRes.ok) {
+        const sent = await sentRes.json();
+        updateSentiment(sent);
+      }
+
+      renderNews(news);
+    } catch(e) {
+      if (knownHeadlines.size === 0) {
+        list.innerHTML = `<div class="state-msg"><div class="icon">⚠️</div><p>新聞載入失敗</p><small>請確認 API Key 是否正確</small></div>`;
+      }
+      setStatus('error', '載入失敗');
+    }
+  }
+
+  function renderNews(articles) {
+    if (!articles || articles.length === 0) {
+      document.getElementById('news-list').innerHTML =
+        `<div class="state-msg"><div class="icon">📭</div><p>目前無最新消息</p></div>`;
+      return;
+    }
+
+    // Sort by datetime desc
+    articles.sort((a, b) => b.datetime - a.datetime);
+    const top = articles.slice(0, 30);
+
+    const newItems = top.filter(a => !knownHeadlines.has(a.headline));
+    newItems.forEach(a => knownHeadlines.add(a.headline));
+
+    const list = document.getElementById('news-list');
+    list.innerHTML = '';
+    document.getElementById('news-count').textContent = `${top.length} 則`;
+
+    top.forEach((item, idx) => {
+      const isNew = newItems.includes(item) && knownHeadlines.size > newItems.length;
+      const age = Date.now() / 1000 - item.datetime;
+      const isRecent = age < 3600; // within 1 hour
+
+      const el = document.createElement('a');
+      el.className = `news-item${isNew ? ' new-item' : ''}`;
+      el.href = item.url;
+      el.target = '_blank';
+      el.rel = 'noopener';
+
+      const timeStr = formatTime(item.datetime);
+      const badge = isRecent
+        ? `<span class="news-badge badge-new">最新</span>` : '';
+
+      el.innerHTML = `
+        ${item.image ? `<img class="news-thumb" src="${item.image}" onerror="this.style.display='none'" loading="lazy">` : ''}
+        <div class="news-body">
+          <div class="news-meta">
+            <span class="news-source">${item.source || '媒體'}</span>
+            <span class="news-time">${timeStr}</span>
+            ${badge}
+          </div>
+          <div class="news-title">${item.headline}</div>
+          ${item.summary ? `<div class="news-summary">${item.summary}</div>` : ''}
+        </div>
+      `;
+
+      list.appendChild(el);
+    });
+  }
+
+  function updateSentiment(sent) {
+    if (!sent?.sentiment) return;
+    const s = sent.sentiment;
+    const bull = ((s.bullishPercent || 0) * 100).toFixed(0);
+    const bear = ((s.bearishPercent || 0) * 100).toFixed(0);
+    const neutral = Math.max(0, 100 - bull - bear);
+
+    document.getElementById('bull-bar').style.width = bull + '%';
+    document.getElementById('bear-bar').style.width = bear + '%';
+    document.getElementById('neutral-bar').style.width = neutral + '%';
+    document.getElementById('bull-pct').textContent = bull + '%';
+    document.getElementById('bear-pct').textContent = bear + '%';
+    document.getElementById('neutral-pct').textContent = neutral + '%';
+
+    const summary = bull > 60 ? '📈 整體偏多，市場情緒樂觀'
+      : bear > 40 ? '📉 整體偏空，市場情緒保守'
+      : '📊 市場情緒中性';
+    document.getElementById('sentiment-summary').textContent = summary;
+  }
+
+  function formatTime(unix) {
+    const d = new Date(unix * 1000);
+    const now = new Date();
+    const diff = (now - d) / 1000;
+    if (diff < 60) return '剛剛';
+    if (diff < 3600) return `${Math.floor(diff/60)} 分鐘前`;
+    if (diff < 86400) return `${Math.floor(diff/3600)} 小時前`;
+    return d.toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' });
+  }
+
+  function setStatus(state, text) {
+    const dot = document.getElementById('status-dot');
+    dot.className = state === 'live' ? 'live' : state === 'error' ? 'error' : '';
+    document.getElementById('status-text').textContent = text;
+  }
+</script>
+</body>
+</html>
