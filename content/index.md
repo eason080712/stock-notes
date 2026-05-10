@@ -29,4 +29,4 @@ title: 股市分析筆記
 
 ## 即時追蹤
 
-- [TSLA Tesla 即時股價 & 新聞](tesla-tracker.html)
+- [TSLA Tesla 即時股價 & 新聞](static/tesla-tracker.html)
