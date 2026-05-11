@@ -40,34 +40,24 @@ const STOCKS = [
 
 async function fetchNews(stock) {
   const query = `${stock.stockName} ${stock.ticker}`
-  const gl = stock.lang === "zh-TW" ? "TW" : "US"
-  const ceid = stock.lang === "zh-TW" ? "TW:zh-Hant" : "US:en"
-  const rss = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=${stock.lang}&gl=${gl}&ceid=${ceid}`
+  const lang = stock.lang === "zh-TW" ? "zh-Hant" : "en"
+  const country = stock.lang === "zh-TW" ? "tw" : "us"
+  const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=${lang}&country=${country}&max=6&apikey=${process.env.GNEWS_API_KEY}`
 
-  const r = await fetch(rss, {
-    headers: { "User-Agent": "Mozilla/5.0 (compatible; StockNewsBot/1.0)" },
-  })
-  const xml = await r.text()
+  const r = await fetch(url)
+  const j = await r.json()
 
-  const items = []
-  const itemRegex = /<item>([\s\S]*?)<\/item>/g
-  let match
-  while ((match = itemRegex.exec(xml)) !== null) {
-    const block = match[1]
-    const titleMatch = block.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || block.match(/<title>(.*?)<\/title>/)
-    const linkMatch = block.match(/<link>(.*?)<\/link>/)
-    const pubDateMatch = block.match(/<pubDate>(.*?)<\/pubDate>/)
-    if (titleMatch) {
-      items.push({
-        title: titleMatch[1].trim(),
-        link: linkMatch?.[1]?.trim() || "",
-        pubDate: pubDateMatch?.[1]?.trim() || new Date().toISOString(),
-      })
-    }
+  if (!j.articles?.length) {
+    console.log(`  → GNews 回傳: ${JSON.stringify(j).slice(0, 120)}`)
+    return []
   }
 
-  console.log(`  → RSS 回傳 ${items.length} 則`)
-  return items.slice(0, 8)
+  console.log(`  → 取得 ${j.articles.length} 則新聞`)
+  return j.articles.map((a) => ({
+    title: a.title,
+    link: a.url,
+    pubDate: a.publishedAt,
+  }))
 }
 
 async function generateSummary(stock, news) {
