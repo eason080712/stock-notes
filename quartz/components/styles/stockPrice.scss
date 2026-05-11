@@ -1,0 +1,85 @@
+.stock-price-widget {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  background: var(--lightgray);
+  border-radius: 8px;
+  border-left: 3px solid var(--secondary);
+
+  .spw-main {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .spw-ticker {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--gray);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .spw-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--dark);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  .spw-change {
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.2rem 0.55rem;
+    border-radius: 5px;
+    font-variant-numeric: tabular-nums;
+
+    &.up {
+      color: #059669;
+      background: rgba(5, 150, 105, 0.12);
+    }
+
+    &.down {
+      color: #dc2626;
+      background: rgba(220, 38, 38, 0.12);
+    }
+
+    &.neutral {
+      color: var(--gray);
+      background: transparent;
+    }
+  }
+
+  .spw-meta {
+    font-size: 0.75rem;
+    color: var(--gray);
+    white-space: nowrap;
+  }
+}
+
+[saved-theme="dark"] .stock-price-widget {
+  .spw-change {
+    &.up {
+      color: #34d399;
+      background: rgba(52, 211, 153, 0.12);
+    }
+
+    &.down {
+      color: #f87171;
+      background: rgba(248, 113, 113, 0.12);
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .stock-price-widget {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
