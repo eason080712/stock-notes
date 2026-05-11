@@ -65,22 +65,18 @@ async function generateSummary(stock, news) {
       ? `你是一位專業股票分析師。請根據以下關於 ${stock.stockName}（${stock.ticker}）的最新新聞，用繁體中文寫一段「近期動態摘要」，約 100–150 字。\n- 重點摘述最重要的 2–3 個事件\n- 說明對股價可能的影響\n- 語氣客觀，不給買賣建議\n\n新聞列表：\n${newsLines}\n\n請直接輸出摘要，不要加標題或額外說明。`
       : `You are a professional stock analyst. Based on the following recent news about ${stock.stockName} (${stock.ticker}), write a brief "Recent Updates" summary in Traditional Chinese (繁體中文), around 100–150 characters.\n- Highlight 2–3 key developments\n- Note potential impact on stock price\n- Be objective, no buy/sell advice\n\nNews:\n${newsLines}\n\nOutput the summary directly without any title or extra explanation.`
 
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`
+  const r = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 400,
-      messages: [{ role: "user", content: prompt }],
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { maxOutputTokens: 400, temperature: 0.3 },
     }),
   })
 
   const j = await r.json()
-  return j.content?.[0]?.text?.trim() || ""
+  return j.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ""
 }
 
 function updateMarkdown(filePath, summary, dateStr) {
