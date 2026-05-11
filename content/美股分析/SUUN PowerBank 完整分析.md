@@ -8,6 +8,8 @@ status: 持續追蹤中
 # SUUN — PowerBank Corporation 完整分析
 ## SNR 技術分析 × 財報基本面 × 未來走勢規劃
 
+<iframe src="https://eason080712.github.io/tesla-tracker/?s=SUUN&n=PowerBank+Corporation&e=NASDAQ&sec=太陽能+%2F+衛星+%2F+能源" style="width:100%;height:820px;border:none;border-radius:12px;display:block;margin-bottom:2rem;" loading="lazy"></iframe>
+
 > [!info] 公司基本資料
 > **股票代號：** NASDAQ: SUUN
 > **公司名稱：** PowerBank Corporation（前身：SolarBank Corporation）

@@ -9,6 +9,8 @@ sector: 雲端 / AI / 軟體
 
 # Microsoft (MSFT) 完整 SNR 技術分析
 
+<iframe src="https://eason080712.github.io/tesla-tracker/?s=MSFT&n=Microsoft%2C+Inc.&e=NASDAQ&sec=雲端+%2F+AI+%2F+軟體" style="width:100%;height:820px;border:none;border-radius:12px;display:block;margin-bottom:2rem;" loading="lazy"></iframe>
+
 > [!info] 分析區間
 > **2025/10/03 – 2026/05/10**（週線視角）
 > 現價：**$420.77**（2026/05/09）｜52週低：$356.28｜ATH：$555.45（2025/07/31）

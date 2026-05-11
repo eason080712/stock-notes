@@ -10,6 +10,8 @@ sector: 閉鎖型基金 / AI 私募投資
 
 # VCX（Fundrise Innovation Fund）完整 SNR 技術分析
 
+<iframe src="https://eason080712.github.io/tesla-tracker/?s=VCX&n=Fundrise+Innovation+Fund&e=NYSE&sec=閉鎖型基金+%2F+AI+私募" style="width:100%;height:820px;border:none;border-radius:12px;display:block;margin-bottom:2rem;" loading="lazy"></iframe>
+
 > [!danger] 重要風險提示
 > VCX **不是**傳統股票，而是一檔**閉鎖型公開交易基金（CEF）**。
 > 現價 $190.99 相較帳面淨值 NAV $19，**溢價高達 10 倍**。
