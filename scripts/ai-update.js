@@ -43,12 +43,31 @@ async function fetchNews(stock) {
   const gl = stock.lang === "zh-TW" ? "TW" : "US"
   const ceid = stock.lang === "zh-TW" ? "TW:zh-Hant" : "US:en"
   const rss = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=${stock.lang}&gl=${gl}&ceid=${ceid}`
-  const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rss)}&count=8`
 
-  const r = await fetch(api)
-  const j = await r.json()
-  if (j.status !== "ok" || !j.items?.length) return []
-  return j.items
+  const r = await fetch(rss, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; StockNewsBot/1.0)" },
+  })
+  const xml = await r.text()
+
+  const items = []
+  const itemRegex = /<item>([\s\S]*?)<\/item>/g
+  let match
+  while ((match = itemRegex.exec(xml)) !== null) {
+    const block = match[1]
+    const titleMatch = block.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || block.match(/<title>(.*?)<\/title>/)
+    const linkMatch = block.match(/<link>(.*?)<\/link>/)
+    const pubDateMatch = block.match(/<pubDate>(.*?)<\/pubDate>/)
+    if (titleMatch) {
+      items.push({
+        title: titleMatch[1].trim(),
+        link: linkMatch?.[1]?.trim() || "",
+        pubDate: pubDateMatch?.[1]?.trim() || new Date().toISOString(),
+      })
+    }
+  }
+
+  console.log(`  → RSS 回傳 ${items.length} 則`)
+  return items.slice(0, 8)
 }
 
 async function generateSummary(stock, news) {
