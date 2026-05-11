@@ -23,6 +23,7 @@ export const defaultContentPageLayout: PageLayout = {
     }),
     Component.ArticleTitle(),
     Component.StockPrice(),
+    Component.LatestNews(),
     Component.ContentMeta(),
     Component.TagList(),
   ],

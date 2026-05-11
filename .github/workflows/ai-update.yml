@@ -1,0 +1,40 @@
+name: AI Daily Stock Update
+
+on:
+  schedule:
+    # 每週一到五 01:00 UTC = 台灣時間 09:00
+    - cron: "0 1 * * 1-5"
+  workflow_dispatch: # 允許手動觸發
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run AI update script
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: node scripts/ai-update.js
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "AI Stock Bot"
+          git config user.email "ai-bot@github.com"
+          git add content/
+          git diff --staged --quiet && echo "無變更" || (
+            git commit -m "chore: AI 每日股票動態更新 $(TZ='Asia/Taipei' date '+%Y-%m-%d')"
+            git push
+          )

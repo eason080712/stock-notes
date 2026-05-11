@@ -2,6 +2,7 @@
 tags: [TSLA, Tesla, SNR, 美股分析, 財報, 進場計畫]
 created: 2026-05-10
 ticker: TSLA
+stockName: Tesla
 lastPrice: 411.79
 lastDate: "2026/05/07"
 sector: 電動車 / 能源 / AI
