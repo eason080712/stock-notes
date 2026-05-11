@@ -2,6 +2,8 @@
 tags: [MSFT, Microsoft, SNR, 美股分析, 財報, 進場計畫, Azure, AI]
 created: 2026-05-10
 ticker: MSFT
+lastPrice: 420.77
+lastDate: "2026/05/09"
 sector: 雲端 / AI / 軟體
 ---
 

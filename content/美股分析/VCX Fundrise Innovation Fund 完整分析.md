@@ -3,6 +3,8 @@ tags: [VCX, Fundrise, 美股, SNR, 閉鎖型基金, AI私募, 進場計畫, 高�
 created: 2026-05-10
 ticker: VCX
 exchange: NYSE
+lastPrice: 190.99
+lastDate: "2026/05/08"
 sector: 閉鎖型基金 / AI 私募投資
 ---
 
